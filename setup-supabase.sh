@@ -1,0 +1,30 @@
+#!/bin/bash
+echo "正在尝试自动设置Supabase数据库..."
+
+# 注意：由于Supabase API需要交互式授权，无法完全自动化
+# 但可以为你生成详细的步骤
+
+echo "请手动完成以下步骤："
+echo ""
+echo "1. 访问 https://supabase.com"
+echo "2. 使用GitHub登录"
+echo "3. 创建新项目："
+echo "   - 项目名称: ai-assistant-platform"
+echo "   - 数据库密码: 设置一个强密码"
+echo "   - 地区: 选择离你近的（如亚太地区）"
+echo "   - 点击'Create new project'"
+echo ""
+echo "4. 等待项目创建完成（约2分钟）"
+echo ""
+echo "5. 获取数据库连接URL："
+echo "   - 进入项目设置 → Database → Connection string"
+echo "   - 选择'URI'格式"
+echo "   - 复制连接字符串"
+echo ""
+echo "6. 在Vercel环境变量中设置："
+echo "   DATABASE_URL=你复制的连接字符串"
+echo ""
+echo "7. 运行数据库迁移："
+echo "   npx prisma db push"
+echo ""
+echo "完成！"

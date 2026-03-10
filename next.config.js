@@ -7,21 +7,9 @@ const nextConfig = {
         hostname: 'oaidalleapiprodscus.blob.core.windows.net',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: '**.googleusercontent.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.githubusercontent.com',
-        pathname: '/**',
-      },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  // 移除实验性配置
 }
 
 module.exports = nextConfig

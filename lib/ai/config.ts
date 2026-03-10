@@ -1,70 +1,102 @@
-import OpenAI from "openai"
+// AI配置 - 使用DeepSeek API
 
-// AI服务配置
-export const AI_CONFIG = {
-  // OpenAI API配置
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY!,
-    organization: process.env.OPENAI_ORG_ID,
-  },
+export interface AIModelConfig {
+  name: string
+  provider: 'deepseek' | 'openai'
+  maxTokens: number
+  costPer1KTokens: number
+  description: string
+}
+
+export interface AIConfig {
+  // DeepSeek配置
+  deepseek: {
+    apiKey?: string
+    baseURL?: string
+  }
   
   // 模型配置
   models: {
-    chat: "gpt-4-turbo-preview", // 或 "gpt-3.5-turbo"
-    image: "dall-e-3",
-    code: "gpt-4-turbo-preview",
-  },
-  
-  // 默认参数
-  defaults: {
-    temperature: 0.7,
-    maxTokens: 2000,
-    topP: 1,
-    frequencyPenalty: 0,
-    presencePenalty: 0,
-  },
-  
-  // 成本控制（单位：美元/千token）
-  pricing: {
-    "gpt-4-turbo-preview": 0.01, // 输入
-    "gpt-4-turbo-preview-output": 0.03, // 输出
-    "gpt-3.5-turbo": 0.001, // 输入
-    "gpt-3.5-turbo-output": 0.002, // 输出
-    "dall-e-3": 0.04, // 每张图片
-  },
-} as const
-
-// 初始化OpenAI客户端
-export function createOpenAIClient() {
-  if (!AI_CONFIG.openai.apiKey) {
-    throw new Error("OPENAI_API_KEY is not set")
+    chat: AIModelConfig[]
+    image: AIModelConfig[]
+    code: AIModelConfig[]
   }
   
+  // 默认模型
+  defaults: {
+    chatModel: string
+    imageModel: string
+    codeModel: string
+  }
+}
+
+// 从环境变量获取配置
+export function getAIConfig(): AIConfig {
+  const config: AIConfig = {
+    deepseek: {
+      apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+      baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
+    },
+    models: {
+      chat: [
+        {
+          name: 'deepseek-chat',
+          provider: 'deepseek',
+          maxTokens: 4096,
+          costPer1KTokens: 0.001,
+          description: 'DeepSeek对话模型',
+        },
+      ],
+      image: [
+        {
+          name: 'dall-e-3',
+          provider: 'openai',
+          maxTokens: 0,
+          costPer1KTokens: 0.08,
+          description: 'OpenAI DALL-E 3图像生成（需要OpenAI API）',
+        },
+      ],
+      code: [
+        {
+          name: 'deepseek-coder',
+          provider: 'deepseek',
+          maxTokens: 4096,
+          costPer1KTokens: 0.001,
+          description: 'DeepSeek代码生成模型',
+        },
+      ],
+    },
+    defaults: {
+      chatModel: 'deepseek-chat',
+      imageModel: 'deepseek-chat', // DeepSeek不支持图像，用聊天模型代替
+      codeModel: 'deepseek-coder',
+    },
+  }
+  
+  return config
+}
+
+// 创建AI客户端
+export function createOpenAIClient() {
+  const { OpenAI } = require('openai')
+  const config = getAIConfig()
+  
+  // 使用DeepSeek配置
   return new OpenAI({
-    apiKey: AI_CONFIG.openai.apiKey,
-    organization: AI_CONFIG.openai.organization,
+    apiKey: config.deepseek.apiKey,
+    baseURL: config.deepseek.baseURL,
   })
 }
 
+// 获取AI客户端（兼容旧代码）
+export const getAIClient = createOpenAIClient
+
 // 计算成本
-export function calculateCost(model: string, inputTokens: number, outputTokens: number = 0): number {
-  const pricing = AI_CONFIG.pricing as Record<string, number>
+export function calculateCost(model: string, tokens: number): number {
+  const config = getAIConfig()
+  const allModels = [...config.models.chat, ...config.models.image, ...config.models.code]
+  const modelConfig = allModels.find(m => m.name === model)
   
-  if (!pricing[model]) {
-    return 0
-  }
-  
-  // 如果是图片生成
-  if (model === "dall-e-3") {
-    return pricing[model]
-  }
-  
-  // 计算文本生成成本
-  const inputCost = (inputTokens / 1000) * pricing[model]
-  const outputModel = `${model}-output`
-  const outputCost = outputTokens > 0 && pricing[outputModel] 
-    ? (outputTokens / 1000) * pricing[outputModel]
-    : 0
-  
-  return inputCost + outputCost
+  if (!modelConfig) return 0
+  return (tokens / 1000) * modelConfig.costPer1KTokens
 }

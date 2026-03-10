@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Neon.tech免费数据库申请说明"
+echo ""
+echo "由于Vercel可能不支持SQLite文件系统，建议使用Neon PostgreSQL："
+echo ""
+echo "1. 访问 https://neon.tech"
+echo "2. 使用GitHub登录"
+echo "3. 创建新项目：ai-assistant-platform"
+echo "4. 获取数据库连接字符串"
+echo "5. 在Vercel中设置 DATABASE_URL"
+echo ""
+echo "或者，如果你想让我帮你申请，请提供："
+echo "- 一个邮箱地址（用于验证）"
+echo "- 你的GitHub账户已登录"
+echo ""
+echo "建议：你先尝试SQLite，如果不行再切换Neon"

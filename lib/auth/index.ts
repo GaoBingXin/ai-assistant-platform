@@ -1,19 +1,10 @@
-import NextAuth from "next-auth"
-import { authConfig } from "./config"
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
-
-// 获取当前用户的辅助函数
+// 简化版认证（无数据库）
 export async function getCurrentUser() {
-  const session = await auth()
-  return session?.user || null
-}
-
-// 检查用户是否已登录
-export async function requireAuth() {
-  const user = await getCurrentUser()
-  if (!user) {
-    throw new Error("未登录")
+  // 开发模式：返回模拟用户
+  return {
+    id: "demo-user-id",
+    email: "demo@example.com",
+    name: "Demo User",
+    credits: 100,
   }
-  return user
 }

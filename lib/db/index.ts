@@ -1,30 +1,25 @@
-import { PrismaClient } from "@prisma/client"
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+// 内存数据库模拟
+export const db = {
+  user: {
+    findUnique: async () => ({
+      id: "demo-user-id",
+      credits: 100,
+    }),
+    update: async () => ({}),
+  },
+  conversation: {
+    findUnique: async () => null,
+    create: async () => ({ id: "conv-001" }),
+  },
+  message: {
+    create: async () => ({ id: "msg-001" }),
+  },
+  generatedImage: {
+    create: async () => ({ id: "img-001" }),
+  },
 }
 
-export const db = globalForPrisma.prisma ?? new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-})
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db
-
-// 数据库连接健康检查
-export async function checkDatabaseHealth() {
-  try {
-    await db.$queryRaw`SELECT 1`
-    return true
-  } catch (error) {
-    console.error("Database health check failed:", error)
-    return false
-  }
-}
-
-// 事务辅助函数
-export async function withTransaction<T>(
-  callback: (prisma: PrismaClient) => Promise<T>
-): Promise<T> {
-  const prisma = db as any
-  return prisma.$transaction(callback)
+export async function initDatabase() {
+  console.log("✅ 使用内存数据库")
+  return true
 }
