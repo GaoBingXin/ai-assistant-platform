@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateImage } from "@/lib/ai/image"
-import { getCurrentUser } from "@/lib/auth"
-import { db } from "@/lib/db"
 
 // 简单的提示词安全检查
 function validatePromptSafety(prompt: string): boolean {
@@ -24,11 +22,6 @@ function validatePromptSafety(prompt: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json({ error: "未登录" }, { status: 401 })
-    }
-
     const body = await request.json()
     const { prompt, size = "1024x1024" } = body
 
@@ -47,11 +40,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "不支持的图像尺寸" }, { status: 400 })
     }
 
+    // 使用演示用户ID
+    const userId = "demo-user-id"
+
     // 生成图像
     const result = await generateImage({
       prompt,
       size,
-      userId: user.id!,
+      userId,
     })
 
     return NextResponse.json(result)
