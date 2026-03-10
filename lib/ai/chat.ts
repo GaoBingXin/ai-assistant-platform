@@ -29,9 +29,14 @@ export async function handleChatRequest(
     // 创建或获取对话
     let conversation
     if (conversationId) {
+      // 先查找对话
       conversation = await db.conversation.findUnique({
-        where: { id: conversationId, userId },
+        where: { id: conversationId },
       })
+      // 验证对话属于当前用户
+      if (conversation && conversation.userId !== userId) {
+        throw new Error("没有权限访问此对话")
+      }
     }
 
     if (!conversation) {
@@ -63,14 +68,14 @@ export async function handleChatRequest(
 
     if (stream && onChunk) {
       // 流式响应
-      const stream = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const streamResponse = await openai.chat.completions.create({
+        model: "deepseek-chat",
         messages: formattedMessages,
         stream: true,
       })
 
       let fullResponse = ""
-      for await (const chunk of stream) {
+      for await (const chunk of streamResponse) {
         const content = chunk.choices[0]?.delta?.content || ""
         if (content) {
           fullResponse += content
@@ -95,8 +100,9 @@ export async function handleChatRequest(
     } else {
       // 非流式响应
       const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "deepseek-chat",
         messages: formattedMessages,
+        stream: false,
       })
 
       const responseContent = completion.choices[0]?.message?.content || ""

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { handleChatRequest } from "@/lib/ai/chat"
 import { getCurrentUser } from "@/lib/auth"
+import { db } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,10 +25,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 如果提供了conversationId，验证权限
+    if (conversationId) {
+      const conversation = await db.conversation.findUnique({
+        where: { id: conversationId },
+      })
+      if (conversation && conversation.userId !== user.id) {
+        return NextResponse.json({ error: "没有权限访问此对话" }, { status: 403 })
+      }
+    }
+
     // 流式响应
     if (stream) {
       const encoder = new TextEncoder()
-      const stream = new ReadableStream({
+      const streamResponse = new ReadableStream({
         async start(controller) {
           try {
             await handleChatRequest({
@@ -51,7 +62,7 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      return new Response(stream, {
+      return new Response(streamResponse, {
         headers: {
           "Content-Type": "text/event-stream",
           "Cache-Control": "no-cache",

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const result = await generateImage({
       prompt,
       size,
-      userId: user.id,
+      userId: user.id!,
     })
 
     return NextResponse.json(result)
